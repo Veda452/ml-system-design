@@ -1,0 +1,44 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # 1. Checkout code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. Setup Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    # 3. Install dependencies
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest
+
+    # 4. Run tests (CI)
+    - name: Run tests
+      run: pytest
+
+    # 5. Login to Docker Hub
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    # 6. Build Docker image
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/my-ml-trainer .
+
+    # 7. Push Docker image
+    - name: Push Docker image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/my-ml-trainer
